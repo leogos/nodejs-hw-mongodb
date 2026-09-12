@@ -1,4 +1,5 @@
 import { Contact } from '../db/Contact.js';
+import cloudinary from '../utils/cloudinary.js';
 
 export const getAllContacts = async ({
   userId,
@@ -46,17 +47,55 @@ export const getContactById = async (contactId, userId) => {
   });
 };
 
-export const createContact = async (payload) => {
-  return Contact.create(payload);
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'contacts',
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result.secure_url);
+      },
+    );
+
+    uploadStream.end(fileBuffer);
+  });
 };
 
-export const updateContact = async (contactId, userId, payload) => {
+export const createContact = async (payload, file) => {
+  let photo;
+
+  if (file) {
+    photo = await uploadToCloudinary(file.buffer);
+  }
+
+  return Contact.create({
+    ...payload,
+    ...(photo && { photo }),
+  });
+};
+
+export const updateContact = async (contactId, userId, payload, file) => {
+  let photo;
+
+  if (file) {
+    photo = await uploadToCloudinary(file.buffer);
+  }
+
   return Contact.findOneAndUpdate(
     {
       _id: contactId,
       userId,
     },
-    payload,
+    {
+      ...payload,
+      ...(photo && { photo }),
+    },
     {
       new: true,
     },

@@ -1,6 +1,9 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import createHttpError from 'http-errors';
+
 import { User } from '../db/User.js';
 import { Session } from '../db/Session.js';
 
@@ -95,4 +98,72 @@ export const logoutUser = async (sessionId, refreshToken) => {
   }
 
   await Session.deleteOne({ _id: session._id });
+};
+
+export const sendResetEmail = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: '5m',
+  });
+
+  const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: 'Reset your password',
+      text: `Reset your password using this link: ${resetLink}`,
+      html: `
+        <p>You can reset your password using the link below:</p>
+        <a href="${resetLink}">${resetLink}</a>
+      `,
+    });
+  } catch (error) {
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPassword = async (token, password) => {
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+
+  const { email } = payload;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await User.updateOne({ _id: user._id }, { password: hashedPassword });
+
+  await Session.deleteMany({
+    userId: user._id.toString(),
+  });
 };
