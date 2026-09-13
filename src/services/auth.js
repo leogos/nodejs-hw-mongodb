@@ -7,6 +7,11 @@ import createHttpError from 'http-errors';
 import { User } from '../db/User.js';
 import { Session } from '../db/Session.js';
 
+import {
+  getFullNameFromGoogleTokenPayload,
+  validateCode,
+} from '../utils/googleOAuth2.js';
+
 const createSession = async (userId) => {
   const accessToken = crypto.randomBytes(30).toString('hex');
   const refreshToken = crypto.randomBytes(30).toString('hex');
@@ -166,4 +171,37 @@ export const resetPassword = async (token, password) => {
   await Session.deleteMany({
     userId: user._id.toString(),
   });
+};
+
+export const loginOrSignupWithGoogle = async (code) => {
+  const loginTicket = await validateCode(code);
+
+  const payload = loginTicket.getPayload();
+
+  if (!payload) {
+    throw createHttpError(401, 'Unauthorized');
+  }
+
+  const email = payload.email;
+
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    const password = await bcrypt.hash(
+      crypto.randomBytes(10).toString('hex'),
+      10,
+    );
+
+    user = await User.create({
+      email,
+      name: getFullNameFromGoogleTokenPayload(payload),
+      password,
+    });
+  }
+
+  await Session.deleteMany({
+    userId: user._id.toString(),
+  });
+
+  return createSession(user._id.toString());
 };
