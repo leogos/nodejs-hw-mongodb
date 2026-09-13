@@ -38,7 +38,7 @@ router.patch(
   '/:contactId',
   isValidId,
   upload.single('photo'),
-  validateBody(updateContactSchema),
+  validateBody(updateContactSchema, { allowEmptyWithFile: true }),
   ctrlWrapper(updateContactController),
 );
 
