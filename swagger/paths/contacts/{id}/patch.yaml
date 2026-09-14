@@ -1,0 +1,76 @@
+tags:
+  - Contacts
+
+summary: Update a contact
+
+operationId: updateContact
+
+description: Update an existing contact belonging to the authenticated user.
+
+security:
+  - bearerAuth: []
+
+parameters:
+  - in: path
+    name: contactId
+    required: true
+    schema:
+      type: string
+    description: The ID of the contact to update.
+
+requestBody:
+  required: true
+  content:
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          name:
+            type: string
+            minLength: 3
+            maxLength: 20
+            example: John Doe
+
+          phoneNumber:
+            type: string
+            minLength: 3
+            maxLength: 20
+            example: '+123456789'
+
+          email:
+            type: string
+            format: email
+            example: john@example.com
+
+          isFavourite:
+            type: boolean
+            example: true
+
+          contactType:
+            type: string
+            enum:
+              - work
+              - home
+              - personal
+            example: personal
+
+          photo:
+            type: string
+            format: binary
+
+responses:
+  '200':
+    description: Successfully updated the contact.
+    content:
+      application/json:
+        schema:
+          type: object
+
+  '400':
+    description: Invalid request body.
+
+  '401':
+    description: Unauthorized.
+
+  '404':
+    description: Contact not found.

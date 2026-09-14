@@ -1,0 +1,70 @@
+tags:
+  - Contacts
+
+summary: Get all contacts
+
+operationId: getContacts
+
+description: Get a list of contacts belonging to the authenticated user.
+
+security:
+  - bearerAuth: []
+
+parameters:
+  - in: query
+    name: page
+    schema:
+      type: integer
+      minimum: 1
+      default: 1
+    description: Page number.
+
+  - in: query
+    name: perPage
+    schema:
+      type: integer
+      minimum: 1
+      default: 10
+    description: Number of contacts per page.
+
+  - in: query
+    name: sortBy
+    schema:
+      type: string
+    description: Field used for sorting contacts.
+
+  - in: query
+    name: sortOrder
+    schema:
+      type: string
+      enum:
+        - asc
+        - desc
+    description: Sort order.
+
+  - in: query
+    name: type
+    schema:
+      type: string
+      enum:
+        - work
+        - home
+        - personal
+    description: Filter contacts by type.
+
+  - in: query
+    name: isFavourite
+    schema:
+      type: boolean
+    description: Filter contacts by favourite status.
+
+responses:
+  '200':
+    description: Successfully retrieved contacts.
+    content:
+      application/json:
+        schema:
+          type: object
+
+  '401':
+    description: Unauthorized.

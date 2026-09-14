@@ -6,7 +6,10 @@
   "scripts": {
     "lint": "eslint src/**/*.js",
     "start": "node ./src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "build": "npm run build-docs",
+    "build-docs": "redocly bundle docs/openapi.yaml --ext json -o docs/swagger.json",
+    "preview-docs": "redocly preview-docs"
   },
   "repository": {
     "type": "git",
@@ -22,6 +25,7 @@
   "homepage": "https://github.com/leogos/nodejs-hw-mongodb#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@redocly/cli": "^2.53.0",
     "eslint": "^10.9.1",
     "globals": "^17.11.0",
     "nodemon": "^3.1.14"
@@ -40,6 +44,7 @@
     "mongoose": "^9.9.4",
     "multer": "^2.3.0",
     "nodemailer": "^10.0.8",
-    "pino-http": "^11.0.0"
+    "pino-http": "^11.0.0",
+    "swagger-ui-express": "^5.0.1"
   }
 }
